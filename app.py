@@ -6,7 +6,7 @@ import pandas as pd
 st.set_page_config(page_title="clima tokio & más", layout="centered")
 
 def clima_actual(ciudad, api_key):
-    url = f"https://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={api_key}&units=metric&lang=es"
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={1e7384891579bbb19d20c7b62e5b7f49}&units=metric&lang=es"
     try:
         response = requests.get(url)
         if response.status_code == 200:
