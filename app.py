@@ -3,10 +3,16 @@ import requests
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# ⚠️ ADVERTENCIA: CLAVE CODIFICADA SOLO PARA PRUEBAS RÁPIDAS
+# Para la entrega final, usa la línea comentada abajo.
+api_key = "1e7384891579bbb19d20c7b62e5b7f49" 
+
+# api_key = st.sidebar.text_input("ingresa tu api key", type="password") # Línea para la entrega final
+
 st.set_page_config(page_title="clima tokio & más", layout="centered")
 
-def clima_actual(ciudad, api_key):
-    url = f"https://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={1e7384891579bbb19d20c7b62e5b7f49}&units=metric&lang=es"
+def clima_actual(ciudad, key):
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={key}&units=metric&lang=es"
     try:
         response = requests.get(url)
         if response.status_code == 200:
@@ -17,8 +23,8 @@ def clima_actual(ciudad, api_key):
         st.error(f"error de conexión: {e}")
         return None
 
-def pronostico_5_dias(ciudad, api_key):
-    url = f"https://api.openweathermap.org/data/2.5/forecast?q={ciudad}&appid={api_key}&units=metric&lang=es"
+def pronostico_5_dias(ciudad, key):
+    url = f"https://api.openweathermap.org/data/2.5/forecast?q={ciudad}&appid={key}&units=metric&lang=es"
     try:
         response = requests.get(url)
         if response.status_code == 200:
@@ -30,7 +36,7 @@ def pronostico_5_dias(ciudad, api_key):
                     "temperatura": item['main']['temp'],
                     "descripción": item['weather'][0]['description']
                 })
-            df = pd.dataframe(lista_datos)
+            df = pd.DataFrame(lista_datos) # Implementación de Pandas (Requisito Fase 2)
             return df
         else:
             return None
@@ -44,15 +50,16 @@ def graficar_pronostico(df_filtrado, ciudad):
     ax.set_ylabel("temperatura (°c)")
     ax.set_title(f"pronóstico del clima en {ciudad}")
     plt.xticks(rotation=45, ha='right')
-    ax.grid(true, linestyle='--', alpha=0.7)
+    ax.grid(True, linestyle='--', alpha=0.7)
     plt.tight_layout()
-    st.pyplot(fig)
+    st.pyplot(fig) # Uso de st.pyplot() para Streamlit
 
 st.title("api openweather - proyecto final")
 st.markdown("consulta el clima actual y el pronóstico de cualquier ciudad.")
 
 st.sidebar.header("configuración")
-api_key = st.sidebar.text_input("ingresa tu api key", type="password")
+# Si usaste la Opción 2 arriba, esta línea ya no pide la clave al usuario.
+# Si quieres el input, descomenta la línea de arriba y comenta la de la clave hardcodeada.
 ciudad_input = st.sidebar.text_input("ingresa una ciudad", value="tokyo")
 cant_registros = st.sidebar.slider("puntos de pronóstico a graficar", 5, 20, 10)
 
