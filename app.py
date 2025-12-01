@@ -30,7 +30,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- CONFIGURACIÓN ---
-API_KEY = "a87680221a76bb8bb5f27a4f93ab601f" # En producción usar st.secrets
+API_KEY = "1e7384891579bbb19d20c7b62e5b7f49" # En producción usar st.secrets
 
 # --- FUNCIONES ---
 @st.cache_data(ttl=600) # Cachear datos por 10 minutos para optimizar
