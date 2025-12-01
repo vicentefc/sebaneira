@@ -3,11 +3,7 @@ import requests
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# ⚠️ ADVERTENCIA: CLAVE CODIFICADA SOLO PARA PRUEBAS RÁPIDAS
-# Para la entrega final, usa la línea comentada abajo.
-api_key = "1e7384891579bbb19d20c7b62e5b7f49" 
-
-# api_key = st.sidebar.text_input("ingresa tu api key", type="password") # Línea para la entrega final
+api_key = st.sidebar.text_input("ingresa tu api key", type="password") # Línea para la entrega final
 
 st.set_page_config(page_title="clima tokio & más", layout="centered")
 
