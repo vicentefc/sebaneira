@@ -1,91 +1,106 @@
 import streamlit as st
 import requests
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime
 
-api_key = st.sidebar.text_input("ingresa tu api key", type="password") # Línea para la entrega final
+# Configuración de la página
+st.set_page_config(page_title="Weather Dashboard", layout="wide")
 
-st.set_page_config(page_title="clima tokio & más", layout="centered")
+# Título y descripción
+st.title("🌦️ API de OpenWeather – Proyecto de Análisis de Datos Climáticos")
+st.markdown("""
+Esta aplicación permite visualizar el clima actual y el pronóstico para diferentes ciudades 
+utilizando la API de OpenWeather.
+""")
 
-def clima_actual(ciudad, key):
-    url = f"https://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={key}&units=metric&lang=es"
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return None
-    except Exception as e:
-        st.error(f"error de conexión: {e}")
-        return None
+# Sidebar para inputs
+st.sidebar.header("Configuración")
+city = st.sidebar.text_input("Ingrese una ciudad:", "Tokyo")
+API_KEY = "a87680221a76bb8bb5f27a4f93ab601f"  # Nota: En producción usar st.secrets o variables de entorno
 
-def pronostico_5_dias(ciudad, key):
-    url = f"https://api.openweathermap.org/data/2.5/forecast?q={ciudad}&appid={key}&units=metric&lang=es"
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            lista_datos = []
-            for item in data['list']:
-                lista_datos.append({
-                    "fecha": item['dt_txt'],
-                    "temperatura": item['main']['temp'],
-                    "descripción": item['weather'][0]['description']
-                })
-            df = pd.DataFrame(lista_datos) # Implementación de Pandas (Requisito Fase 2)
-            return df
-        else:
-            return None
-    except:
-        return None
+# Funciones para obtener datos
+def get_current_weather(city):
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric&lang=es"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    return None
 
-def graficar_pronostico(df_filtrado, ciudad):
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(df_filtrado['fecha'], df_filtrado['temperatura'], marker='o', color='tab:blue')
-    ax.set_xlabel("fecha / hora")
-    ax.set_ylabel("temperatura (°c)")
-    ax.set_title(f"pronóstico del clima en {ciudad}")
-    plt.xticks(rotation=45, ha='right')
-    ax.grid(True, linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    st.pyplot(fig) # Uso de st.pyplot() para Streamlit
+def get_forecast(city):
+    url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={API_KEY}&units=metric&lang=es"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    return None
 
-st.title("api openweather - proyecto final")
-st.markdown("consulta el clima actual y el pronóstico de cualquier ciudad.")
-
-st.sidebar.header("configuración")
-# Si usaste la Opción 2 arriba, esta línea ya no pide la clave al usuario.
-# Si quieres el input, descomenta la línea de arriba y comenta la de la clave hardcodeada.
-ciudad_input = st.sidebar.text_input("ingresa una ciudad", value="tokyo")
-cant_registros = st.sidebar.slider("puntos de pronóstico a graficar", 5, 20, 10)
-
-if st.sidebar.button("consultar clima"):
-    if api_key:
-        st.subheader(f"clima actual en {ciudad_input}")
-        data_clima = clima_actual(ciudad_input, api_key)
-
-        if data_clima:
-            col1, col2, col3 = st.columns(3)
-            col1.metric("temperatura", f"{data_clima['main']['temp']} °c")
-            col2.metric("humedad", f"{data_clima['main']['humidity']}%")
-            col3.metric("clima", data_clima['weather'][0]['description'].capitalize())
-        else:
-            st.error("no se pudo obtener el clima. verifica la ciudad o tu api key.")
-
-        st.divider()
-
-        st.subheader("pronóstico extendido")
-        df_pronostico = pronostico_5_dias(ciudad_input, api_key)
-
-        if df_pronostico is not None:
-            df_filtrado = df_pronostico.head(cant_registros)
-            graficar_pronostico(df_filtrado, ciudad_input)
-
-            with st.expander("ver tabla de datos detallada"):
-                st.dataframe(df_filtrado)
-        else:
-            st.error("no se pudo cargar el pronóstico.")
+# Lógica principal
+if city:
+    # Obtener datos
+    current = get_current_weather(city)
+    forecast = get_forecast(city)
+    
+    if current:
+        # Mostrar métricas principales
+        st.subheader(f"Clima Actual en {current['name']}, {current['sys']['country']}")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Temperatura", f"{current['main']['temp']}°C", f"Sensación: {current['main']['feels_like']}°C")
+            
+        with col2:
+            st.metric("Humedad", f"{current['main']['humidity']}%")
+            
+        with col3:
+            st.metric("Viento", f"{current['wind']['speed']} m/s")
+            
+        with col4:
+            st.metric("Clima", current['weather'][0]['description'].capitalize())
+            
+        # Gráfico de pronóstico
+        if forecast:
+            st.markdown("---")
+            st.subheader("Pronóstico a 5 Días (Tendencia)")
+            
+            # Procesar datos para el gráfico
+            forecast_list = forecast['list']
+            dates = [datetime.fromtimestamp(item['dt']) for item in forecast_list]
+            temps = [item['main']['temp'] for item in forecast_list]
+            humidity = [item['main']['humidity'] for item in forecast_list]
+            
+            # Crear DataFrame para facilitar el graficado
+            df = pd.DataFrame({
+                'Fecha': dates,
+                'Temperatura': temps,
+                'Humedad': humidity
+            })
+            
+            # Opción de filtro para el gráfico
+            metric_to_plot = st.radio("Seleccione métrica para graficar:", ["Temperatura", "Humedad"], horizontal=True)
+            
+            # Crear gráfico con Matplotlib
+            fig, ax = plt.subplots(figsize=(10, 4))
+            
+            if metric_to_plot == "Temperatura":
+                ax.plot(df['Fecha'], df['Temperatura'], color='#FF5733', linewidth=2, marker='o', markersize=4)
+                ax.set_ylabel("Temperatura (°C)")
+                ax.set_title(f"Evolución de la Temperatura en {city}")
+                ax.grid(True, alpha=0.3)
+            else:
+                ax.plot(df['Fecha'], df['Humedad'], color='#33B5FF', linewidth=2, marker='o', markersize=4)
+                ax.set_ylabel("Humedad (%)")
+                ax.set_title(f"Evolución de la Humedad en {city}")
+                ax.grid(True, alpha=0.3)
+                
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
+            
+            # Mostrar datos en tabla (opcional)
+            with st.expander("Ver datos detallados"):
+                st.dataframe(df)
+                
     else:
-        st.warning("por favor ingresa tu api key en la barra lateral.")
+        st.error("No se pudo encontrar la ciudad. Por favor verifique el nombre e intente nuevamente.")
 else:
-    st.info("ingresa tu api key y presiona 'consultar clima' para empezar.")
+    st.info("Ingrese el nombre de una ciudad en la barra lateral para comenzar.")
